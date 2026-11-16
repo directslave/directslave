@@ -1,0 +1,75 @@
+#!/bin/sh
+
+set -eu
+
+prefix=/usr/local/directslave
+config=${prefix}/etc/directslave.conf
+
+if [ ! -r "${config}" ]; then
+    echo "Cannot read ${config}" >&2
+    exit 1
+fi
+
+config_value()
+{
+    awk -v key="$1" '
+        $1 == key && $1 !~ /^#/ { value = $2 }
+        END { print value }
+    ' "${config}"
+}
+
+run_uid=$(config_value uid)
+run_gid=$(config_value gid)
+dns_port=$(config_value dns_port)
+dns_listen_ip4=$(config_value dns_listen_ip4)
+dns_listen_ip6=$(config_value dns_listen_ip6)
+
+case "${run_uid}" in
+    ''|*[!0-9]*) echo "Invalid numeric uid in ${config}: ${run_uid}" >&2; exit 1 ;;
+esac
+
+case "${run_gid}" in
+    ''|*[!0-9]*) echo "Invalid numeric gid in ${config}: ${run_gid}" >&2; exit 1 ;;
+esac
+
+case "${dns_port}" in
+    ''|*[!0-9]*) echo "Invalid dns_port in ${config}: ${dns_port}" >&2; exit 1 ;;
+esac
+
+if [ "${dns_port}" -lt 1 ] || [ "${dns_port}" -gt 65535 ]; then
+    echo "dns_port is outside 1..65535 in ${config}: ${dns_port}" >&2
+    exit 1
+fi
+
+if [ -z "${dns_listen_ip4}" ]; then
+    echo "dns_listen_ip4 is empty in ${config}" >&2
+    exit 1
+fi
+
+if [ -z "${dns_listen_ip6}" ]; then
+    echo "dns_listen_ip6 is empty in ${config}" >&2
+    exit 1
+fi
+
+install -d -m 0755 \
+    "${prefix}/log" \
+    "${prefix}/run" \
+    "${prefix}/var" \
+    "${prefix}/var/db" \
+    "${prefix}/var/zones"
+
+touch \
+    "${prefix}/var/db/directslave.inc" \
+    "${prefix}/var/db/passwd" \
+    "${prefix}/log/access.log" \
+    "${prefix}/log/action.log" \
+    "${prefix}/log/error.log" \
+    "${prefix}/log/dns.log"
+
+# Preserve the historical DirectSlave privilege model: the configured uid/gid
+# can read and modify every file below the private application prefix.
+chown -R "${run_uid}:${run_gid}" "${prefix}"
+chmod 0755 "${prefix}/bin/directslave" "${prefix}/bin/directslave-prepare"
+chmod 0600 "${prefix}/var/db/passwd"
+
+echo "DirectSlave runtime: dns=${dns_listen_ip4}:${dns_port},${dns_listen_ip6}:${dns_port}, uid=${run_uid}, gid=${run_gid}"

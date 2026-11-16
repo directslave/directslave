@@ -1,0 +1,86 @@
+#include <tunables/global>
+
+# DirectSlave 4.0 AppArmor profile.
+#
+# In integrated mode DirectSlave writes zone files itself (3.5 only wrote the
+# control file and let BIND write the zones), so it needs to create files in
+# the zone directory and next to the control file. Every file it creates there
+# is written to a hidden temp name first and renamed into place:
+#
+#   zone dir:          .directsecondary-zone-*   -> <zone>.db
+#                      .directslave.refetch*      (--domain reload spool)
+#   control file dir:  .directslave-conf-*       -> directslave.inc
+#                      .directslave-check-*       (--check write probe)
+#                      directslave.inc.lock       (cross-process lock)
+#
+# Adjust the two variables below to named_workdir and to the directory of
+# named_conf. Several paths may be listed, separated by spaces, which covers a
+# migration where old zones still point to /etc/namedb/secondary while new ones
+# land in named_workdir. Anything under /usr/local/directslave is already
+# covered by the rule further down.
+
+@{DS_ZONES}=/etc/namedb/secondary /usr/local/directslave/var/zones
+@{DS_CONF}=/etc/namedb /usr/local/directslave/var/db
+
+/usr/local/directslave/bin/directslave flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+  #include <abstractions/ssl_certs>
+
+  capability net_bind_service,
+  capability setuid,
+  capability setgid,
+  capability chown,
+  capability dac_override,
+
+  # Keep this compatible with AppArmor 2.13 shipped by Ubuntu 20.04. Listener
+  # addresses and ports are restricted by directslave.conf and normal socket
+  # ownership; this rule only prevents AppArmor from overriding them.
+  # Also covers the unix control socket used by --dump-db.
+  network,
+
+  signal (receive),
+  signal (send),
+
+  # Own tree: config, logs, pid, control socket, ssl, var/db, var/zones.
+  /usr/local/directslave/** rwkl,
+  /usr/local/directslave/bin/directslave mr,
+  /usr/local/directslave/scripts/** rix,
+
+  # Zone files: create, atomic rename, delete on remove/expire, refetch spool.
+  @{DS_ZONES}/ r,
+  @{DS_ZONES}/** rwk,
+
+  # Control file and its helpers only; the rest of that directory stays
+  # read-only (on some layouts it also holds named.conf and rndc keys).
+  @{DS_CONF}/ r,
+  @{DS_CONF}/directslave.inc rwk,
+  @{DS_CONF}/directslave.inc.lock rwk,
+  @{DS_CONF}/directslave.inc.tmp rw,
+  @{DS_CONF}/.directslave-conf-* rw,
+  @{DS_CONF}/.directslave-check-* rw,
+
+  # TLS certificates issued by certbot (live/ are symlinks into archive/).
+  /etc/letsencrypt/live/** r,
+  /etc/letsencrypt/archive/** r,
+
+  # External mode (dns_server external): rndc runs under this profile.
+  /usr/sbin/rndc rix,
+  /usr/local/bin/rndc rix,
+  /etc/bind/rndc.key r,
+  /etc/bind/rndc.conf r,
+
+  /bin/sh rix,
+  /bin/dash rix,
+  /usr/bin/sh rix,
+  /usr/bin/dash rix,
+  /usr/bin/perl rix,
+  /usr/local/bin/perl rix,
+  /usr/bin/mkdir rix,
+  /usr/bin/mv rix,
+
+  /etc/localtime r,
+  /proc/sys/net/core/somaxconn r,
+  /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
+  owner /proc/@{pid}/** r,
+}

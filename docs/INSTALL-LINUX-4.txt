@@ -1,0 +1,53 @@
+DirectSlave 4 clean Linux installation
+===========================================
+
+1. Verify that no DNS server is listening on port 53:
+
+   ss -lntup | grep ':53 '
+
+2. Extract as root:
+
+   tar -xzf directslave-4.0.18-linux-amd64.tar.gz -C /usr/local
+
+3. Prepare systemd and the active MAC framework:
+
+   /usr/local/directslave/install-linux.sh
+
+4. Edit the configuration if required:
+
+   vi /usr/local/directslave/etc/directslave.conf
+
+   The integrated DNS listener and runtime identity are taken from:
+
+   dns_listen_ip4 *
+   dns_listen_ip6 *
+   dns_port   53
+   uid        53
+   gid        53
+
+   On a host without IPv6 set "dns_listen_ip6 none": with "*" DirectSlave
+   refuses to start when the IPv6 socket cannot be opened.
+
+   dns_listen_ip4 / dns_listen_ip6 each take "*" (every address of that family),
+   a single address, or several addresses separated by spaces or commas.
+
+   To disable a family, set it to "none" or comment it out. Commenting out
+   works only while the other directive is set: with both commented out,
+   DirectSlave falls back to "*" on IPv4 and IPv6.
+
+5. Add a DirectAdmin API user, run checks and start:
+
+   /usr/local/directslave/bin/directslave --password admin
+   /usr/local/directslave/bin/directslave --check
+   systemctl start directslave
+   systemctl status directslave
+
+6. Inspect confinement errors when startup fails:
+
+   journalctl -u directslave -b --no-pager
+   dmesg | grep -i apparmor
+   ausearch -m AVC -ts recent
+
+The systemd service intentionally runs as root initially. DirectSlave binds the
+configured HTTP and DNS listeners, then changes to the numeric uid/gid from
+directslave.conf. Do not add User= or Group= to the service unit.

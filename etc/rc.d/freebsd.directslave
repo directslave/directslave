@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+# PROVIDE: directslave
+# REQUIRE: NETWORKING SERVERS
+# KEYWORD: shutdown
+#
+# Install:
+#   install -m 0555 /usr/local/directslave/etc/rc.d/freebsd.directslave /usr/local/etc/rc.d/directslave
+#   sysrc directslave_enable=YES
+#   service directslave start
+#
+# DirectSlave is started as root: it binds dns_port and the HTTP ports first
+# and then drops to the numeric uid/gid from directslave.conf. "background 1"
+# is required there, the daemon detaches itself and writes the pid file.
+#
+# service directslave reload   - re-read the zone list, reopen logs, reload
+#                                the HTTPS certificate (SIGHUP)
+# service directslave check    - run the configuration self-check
+
+. /etc/rc.subr
+
+name="directslave"
+rcvar=directslave_enable
+
+load_rc_config $name
+
+: ${directslave_enable="NO"}
+: ${directslave_flags="--run"}
+: ${directslave_pidfile="/usr/local/directslave/run/directslave.pid"}
+
+command="/usr/local/directslave/bin/directslave"
+pidfile=${directslave_pidfile}
+required_files="/usr/local/directslave/etc/directslave.conf"
+
+extra_commands="reload check"
+sig_reload="HUP"
+check_cmd="${command} --check"
+
+run_rc_command "$1"

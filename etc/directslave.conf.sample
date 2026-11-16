@@ -1,0 +1,133 @@
+# DirectSlave 4.0 configuration
+#
+# Options marked @NEW did not exist in 3.5. Every @NEW option is optional:
+# without them DirectSlave behaves like 3.5 (external BIND controlled by rndc).
+# All @NEW options documented in directslave.conf.v4-additions.md
+
+# 1 - detach and run as a daemon, 0 - stay in the foreground
+background      1
+
+# @NEW
+# DNS backend:
+#   integrated - DirectSlave serves the zones itself (AXFR, NOTIFY, DNSSEC passthrough)
+#   external   - zones are handed to BIND through named_conf + rndc (3.5 behaviour, default)
+dns_server      integrated
+
+# @NEW
+# DNS listen addresses, one directive per family (integrated only).
+# "*" - every address of the family, a single address, or a list separated by
+# spaces or commas; "none" turns the family off. With only one directive set, the other
+# family is off; with neither set, both are "*".
+# Hostnames are not accepted; every listed address must be bindable.
+dns_listen_ip4  *
+dns_listen_ip6  *
+
+# @NEW
+# DNS port for UDP and TCP (integrated only). Bound before uid/gid are dropped.
+dns_port        53
+
+# @NEW
+# SOA timers (seconds) for a zone that has not completed its first AXFR yet.
+# After the first transfer the zone's own SOA timers are used.
+dns_new_refresh 300
+dns_new_retry   60
+dns_new_expire  604800
+
+# @NEW
+# What happens when a zone expires (the primary was unreachable for the whole
+# SOA expire period):
+#   0 - unload it from memory and disk, keep its declaration in named_conf
+#   1 - also remove it from named_conf
+dns_expunge_expired 0
+
+# @NEW
+# Maximum number of AXFRs running at the same time (integrated only).
+transfer_queue  30
+
+# @NEW
+# On start (--run, not on reload) compare the SOA serial of every stored zone
+# with its primary before answering it; refetch the zones that drifted.
+startup_check           on
+
+# @NEW
+# Startup check pacing:
+#   workers - SOA probes in flight across all primaries
+#   rate    - probes per second sent to one primary
+#   grace   - seconds after which still unverified zones are answered from
+#             stored data anyway; 0 - wait for the check
+startup_check_workers   30
+startup_check_rate      30
+startup_check_grace     0
+
+# @NEW
+# Per-query log (integrated only): off, errors (negative answers), all.
+# Asynchronous; if the buffer (lines) fills, log lines are dropped, never queries.
+dns_query_log        off
+dns_query_log_file   /usr/local/directslave/log/dns-query.log
+dns_query_log_buffer 8192
+
+# Web dashboard and DirectAdmin API: listen address and ports.
+# host: "*" (every IPv4 and IPv6 address) or one IPv4 or IPv6 address.
+# With ssl on, HTTP stays on "port" and HTTPS is added on "sslport".
+host            *
+port            2222
+sslport         2224
+
+# HTTPS for the dashboard/API: on/off, certificate chain and private key.
+# Certificates are re-read on SIGHUP (kill -1), no restart needed.
+ssl             off
+ssl_cert        /usr/local/directslave/ssl/fullchain.pem
+ssl_key         /usr/local/directslave/ssl/privkey.pem
+
+# Dashboard session cookie name and the key it is signed with.
+cookie_sess_id  DS_SESSID
+cookie_auth_key CHANGE_THIS_TO_A_LONG_RANDOM_VALUE
+
+# 1 - verbose logging of API requests and internals
+debug           0
+
+# Numeric UID/GID DirectSlave runs as after binding its ports.
+# Existing installs: use the bind/named UID/GID, so the zone files and
+# named_conf stay readable and writable for both.
+# First-time installs: create a separate user and group.
+uid             53
+gid             53
+
+# PID file. 
+# The control socket for --dump-db is created next to it (integrated).
+pid             /usr/local/directslave/run/directslave.pid
+
+# Logs: web access, errors, actions (API/dashboard/CLI changes).
+access_log      /usr/local/directslave/log/access.log
+error_log       /usr/local/directslave/log/error.log
+action_log      /usr/local/directslave/log/action.log
+
+# @NEW
+# DNS event log: transfers, NOTIFY, timers, startup check (integrated only).
+# Defaults to action_log.
+dns_server_log  /usr/local/directslave/log/dns.log
+
+# Directory with zone files.
+named_workdir   /usr/local/directslave/var/zones
+
+# Control file: one "zone { ... }" declaration per secondary zone. BIND includes
+# it in external mode; in integrated mode it is DirectSlave's own zone list.
+named_conf      /usr/local/directslave/var/db/directslave.inc
+
+# Retry interval (seconds) written into each zone declaration for BIND.
+# In integrated mode it is also the default for dns_new_retry.
+retry_time      1200
+
+# rndc binary (external only); "none" - never call rndc.
+rndc_path       /usr/local/bin/rndc
+
+# Zone file format BIND is told to use: text or raw (external only).
+named_format    text
+
+# Users allowed to log in to the dashboard and to call the API.
+authfile        /usr/local/directslave/var/db/passwd
+
+# @NEW
+# Go pprof profiler on localhost:pprof_port. When omitted it is ON (1).
+pprof_enable    0
+pprof_port      2223

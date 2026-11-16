@@ -1,0 +1,257 @@
+/*
+ * Base structure
+ */
+
+/* Move down content because we have a fixed navbar that is 50px tall */
+body {
+  padding-top: 50px;
+}
+
+
+/*
+ * Global add-ons
+ */
+
+.sub-header {
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+/*
+ * Top navigation
+ * Hide default border to remove 1px line.
+ */
+.navbar-fixed-top {
+  border: 0;
+}
+
+/*
+ * Sidebar
+ */
+
+/* Hide for mobile, show later */
+.sidebar {
+  display: none;
+}
+@media (min-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 51px;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    display: block;
+    padding: 20px;
+    overflow-x: hidden;
+    overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+    background-color: #f5f5f5;
+    border-right: 1px solid #eee;
+  }
+}
+
+/* Sidebar navigation */
+.nav-sidebar {
+  margin-right: -21px; /* 20px padding + 1px border */
+  margin-bottom: 20px;
+  margin-left: -20px;
+}
+.nav-sidebar > li > a {
+  padding-right: 20px;
+  padding-left: 20px;
+}
+.nav-sidebar > .active > a,
+.nav-sidebar > .active > a:hover,
+.nav-sidebar > .active > a:focus {
+  color: #fff;
+  background-color: #428bca;
+}
+
+
+/*
+ * Main content
+ */
+
+.main {
+  padding: 20px;
+}
+@media (min-width: 768px) {
+  .main {
+    padding-right: 40px;
+    padding-left: 40px;
+  }
+}
+.main .page-header {
+  margin-top: 0;
+}
+
+
+/*
+ * Placeholder dashboard ideas
+ */
+
+.placeholders {
+  margin-bottom: 30px;
+  text-align: center;
+}
+.placeholders h4 {
+  margin-bottom: 0;
+}
+.placeholder {
+  margin-bottom: 20px;
+}
+.placeholder img {
+  display: inline-block;
+  border-radius: 50%;
+}
+
+/*
+ * Zone table and statistics
+ *
+ * The zone list carries twelve columns, so it is deliberately denser than the
+ * rest of the dashboard: monospace figures that line up, a small type size, and
+ * no wrapping except in the error column.
+ */
+
+.ds-toolbar {
+  margin-bottom: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+  line-height: 28px;
+}
+.ds-toolbar .ds-count {
+  color: #777;
+  font-size: 14px;
+  margin-right: 10px;
+}
+.ds-toolbar .ds-filter {
+  margin-right: 4px;
+  font-weight: normal;
+}
+.ds-toolbar .ds-find {
+  display: inline-block;
+  width: 200px;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+.ds-toolbar .ds-right {
+  float: right;
+}
+.ds-toolbar .ds-auto {
+  font-weight: normal;
+  font-size: 14px;
+  color: #777;
+  margin: 0 8px 0 0;
+}
+
+.ds-zones {
+  font-size: 14px;
+}
+.ds-zones > thead > tr > th {
+  white-space: nowrap;
+  border-bottom: 2px solid #ddd;
+}
+.ds-zones > thead > tr > th a {
+  color: #333;
+  text-decoration: none;
+}
+.ds-zones > thead > tr > th.ds-sorted a {
+  font-weight: bold;
+  color: #000;
+}
+.ds-zones > tbody > tr > td {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.ds-zones .ds-zone {
+  font-family: Menlo, Monaco, Consolas, monospace;
+}
+.ds-zones td.text-right {
+  font-family: Menlo, Monaco, Consolas, monospace;
+}
+.ds-zones .ds-fails {
+  font-weight: bold;
+  color: #a94442;
+}
+.ds-zones .ds-error {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #a94442;
+  font-size: 14px;
+}
+.ds-zones .ds-actions {
+  white-space: nowrap;
+}
+.ds-zones .ds-actions a {
+  font-size: 16px;
+  margin-right: 10px;
+  text-decoration: none;
+}
+
+/* Statistics */
+
+.ds-cards .panel {
+  margin-bottom: 15px;
+}
+.ds-kv > tbody > tr > td {
+  border-top: none;
+  padding: 3px 10px;
+  font-size: 14px;
+}
+.ds-states > tbody > tr > td {
+  border-top: none;
+  padding: 4px 10px;
+}
+.ds-states .ds-state-count {
+  width: 70px;
+  text-align: right;
+  font-family: Menlo, Monaco, Consolas, monospace;
+  font-size: 16px;
+  font-weight: bold;
+}
+.ds-states .ds-state-count a {
+  text-decoration: none;
+}
+.ds-states .ds-state-name {
+  width: 120px;
+  font-family: Menlo, Monaco, Consolas, monospace;
+}
+.ds-states .ds-state-name a {
+  color: #333;
+  text-decoration: none;
+}
+.ds-states .ds-state-meaning {
+  color: #777;
+  font-size: 14px;
+}
+.ds-states .ds-zero-row .ds-state-name a,
+.ds-states .ds-zero-row .ds-state-meaning {
+  color: #bbb;
+}
+.ds-good a { color: #3c763d; }
+.ds-bad a  { color: #a94442; }
+.ds-warn a { color: #8a6d3b; }
+.ds-busy a { color: #31708f; }
+.ds-zero a { color: #bbb; }
+
+.ds-raw {
+  border: none;
+  background: #fbfbfb;
+  font-size: 14px;
+  margin: 0;
+}
+
+.ds-zones .ds-signed {
+  color: #3c763d;
+}
+.ds-zones .ds-signed a {
+  color: #3c763d;
+  text-decoration: none;
+}
+.ds-zones .ds-muted {
+  color: #bbb;
+}
+.ds-zones .ds-muted a {
+  color: #bbb;
+  text-decoration: none;
+}

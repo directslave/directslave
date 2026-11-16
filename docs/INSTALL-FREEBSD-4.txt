@@ -1,0 +1,73 @@
+DirectSlave 4 clean FreeBSD installation
+===========================================
+
+1. Verify that no DNS server is listening on port 53:
+
+   sockstat -l -P tcp,udp -p 53
+
+   If named is running and you want the integrated DNS server, stop it:
+
+   service named stop
+   sysrc named_enable=NO
+
+2. Extract as root:
+
+   tar -xzf directslave-4.0.18-freebsd-amd64.tar.gz -C /usr/local
+
+3. Create the configuration and a random cookie key:
+
+   cp /usr/local/directslave/etc/directslave.conf.sample /usr/local/directslave/etc/directslave.conf
+   sed -i '' "s/CHANGE_THIS_TO_A_LONG_RANDOM_VALUE/$(od -An -N48 -tx1 /dev/urandom | tr -d ' \n')/" /usr/local/directslave/etc/directslave.conf
+   chmod 0600 /usr/local/directslave/etc/directslave.conf
+
+4. Edit the configuration if required:
+
+   vi /usr/local/directslave/etc/directslave.conf
+
+   The integrated DNS listener and runtime identity are taken from:
+
+   dns_listen_ip4 *
+   dns_listen_ip6 *
+   dns_port   53
+   uid        53
+   gid        53
+
+   On a host without IPv6 set "dns_listen_ip6 none": with "*" DirectSlave
+   refuses to start when the IPv6 socket cannot be opened.
+
+   uid/gid 53 is the "bind" user and group of the FreeBSD base system.
+   dns_listen_ip4 / dns_listen_ip6 each take "*" (every address of that family),
+   a single address, or several addresses separated by spaces or commas;
+   "none" turns the family off.
+
+5. Create the runtime directories and set ownership:
+
+   /usr/local/directslave/bin/directslave-prepare
+
+6. Add a DirectAdmin API user and run checks:
+
+   /usr/local/directslave/bin/directslave --password admin
+   /usr/local/directslave/bin/directslave --check
+
+7. Install the rc.d script and start:
+
+   install -m 0555 /usr/local/directslave/etc/rc.d/freebsd.directslave /usr/local/etc/rc.d/directslave
+   sysrc directslave_enable=YES
+   service directslave start
+   service directslave status
+
+8. Look at the logs when startup fails:
+
+   tail -n 50 /usr/local/directslave/log/error.log
+   tail -n 50 /usr/local/directslave/log/dns.log
+
+   or run in the foreground:
+
+   /usr/local/directslave/bin/directslave --debug
+
+DirectSlave is started as root on purpose. It binds the configured HTTP and DNS
+listeners, then changes to the numeric uid/gid from directslave.conf.
+
+Log rotation: "service directslave reload" (SIGHUP) reopens the log files, so
+newsyslog can rotate them with the pid file
+/usr/local/directslave/run/directslave.pid.

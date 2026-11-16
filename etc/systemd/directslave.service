@@ -1,0 +1,21 @@
+[Unit]
+Description=DirectSlave integrated authoritative secondary DNS
+Documentation=https://directslave.com/
+Wants=network-online.target
+After=network-online.target
+Conflicts=bind9.service named.service
+
+[Service]
+Type=simple
+# Do not set User=/Group=: DirectSlave must open dns_port first and then drops
+# privileges to uid/gid configured in directslave.conf.
+ExecStartPre=/usr/local/directslave/bin/directslave-prepare
+ExecStart=/usr/local/directslave/bin/directslave --run
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

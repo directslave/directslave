@@ -1,0 +1,2 @@
+/usr/local/directslave/bin/directslave    --  gen_context(system_u:object_r:directslave_exec_t,s0)
+/usr/local/directslave(/.*)?                  gen_context(system_u:object_r:directslave_data_t,s0)

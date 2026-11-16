@@ -1,0 +1,57 @@
+# DirectSlave 4 documentation
+
+DirectSlave is a secondary DNS server for [DirectAdmin](https://www.directadmin.com/).
+It speaks the DirectAdmin Multi-Server API, so a DirectAdmin server adds,
+updates and removes zones on it the same way it would on a second DirectAdmin
+box, without a second DirectAdmin license.
+
+Version 4 contains its own authoritative DNS server. One process receives the
+API calls, transfers the zones from the primary and answers DNS queries. The
+older mode, where DirectSlave only maintains a zone list for BIND and calls
+`rndc`, is still available and is what an unchanged 3.x configuration keeps
+using.
+
+## Contents
+
+| Document | What it covers |
+|---|---|
+| [Installation](installation.md) | Requirements, FreeBSD and Linux install, directory layout, first start |
+| [Configuration](configuration.md) | Every option of `directslave.conf`, with defaults |
+| [DirectAdmin setup](directadmin.md) | Connecting a DirectAdmin server, how zones are added and who owns them |
+| [Command line](command-line.md) | Users and passwords, zone management, status, exit codes |
+| [Dashboard](dashboard.md) | The web interface: zones, statistics, users, logs |
+| [DNS server](dns-server.md) | How the integrated server transfers and answers, DNSSEC, timers, zone states |
+| [Operations](operations.md) | Service control, logs and rotation, HTTPS, backups, hooks, security |
+| [Upgrading](upgrading.md) | From 3.x, and from BIND to the integrated server |
+| [Troubleshooting](troubleshooting.md) | Start failures, zones that do not transfer, login problems |
+
+Other files in this directory:
+
+- `INSTALL-FREEBSD-4.txt`, `INSTALL-LINUX-4.txt`: the short install notes that
+  ship inside the release archives.
+- `INTEGRATION_NOTES.md`: design notes on how the DNS server was merged in.
+- `legacy/`: README and change history of 3.5 and earlier.
+
+## The short version
+
+1. Extract the archive into `/usr/local`, create `directslave.conf` from the
+   sample, run `directslave-prepare`.
+2. Create an API user: `/usr/local/directslave/bin/directslave --password admin`
+3. Check and start: `directslave --check`, then start the service.
+4. In DirectAdmin, add the secondary under Multi Server Setup with that user.
+5. Make sure the primary allows zone transfers to the secondary and notifies it.
+
+Each step is described in [Installation](installation.md) and
+[DirectAdmin setup](directadmin.md).
+
+## Two modes
+
+| | Integrated (`dns_server integrated`) | External (`dns_server external`, default) |
+|---|---|---|
+| Who answers DNS | DirectSlave | BIND (`named`) |
+| Who transfers zones | DirectSlave (AXFR) | BIND |
+| `rndc` | not used | called after zone list changes |
+| Zone list (`named_conf`) | DirectSlave's own registry | included from BIND's `named.conf` |
+| Statistics page, `--dump-db`, zone states | yes | no, the zones are BIND's |
+
+A configuration file without `dns_server` runs in external mode.

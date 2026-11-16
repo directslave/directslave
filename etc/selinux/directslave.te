@@ -1,0 +1,34 @@
+policy_module(directslave, 1.0.0)
+
+type directslave_t;
+type directslave_exec_t;
+init_daemon_domain(directslave_t, directslave_exec_t)
+
+type directslave_data_t;
+files_type(directslave_data_t)
+
+manage_dirs_pattern(directslave_t, directslave_data_t, directslave_data_t)
+manage_files_pattern(directslave_t, directslave_data_t, directslave_data_t)
+manage_lnk_files_pattern(directslave_t, directslave_data_t, directslave_data_t)
+manage_sock_files_pattern(directslave_t, directslave_data_t, directslave_data_t)
+can_exec(directslave_t, directslave_data_t)
+
+files_search_usr(directslave_t)
+corecmd_exec_shell(directslave_t)
+miscfiles_read_generic_certs(directslave_t)
+sysnet_dns_name_resolve(directslave_t)
+
+corenet_tcp_bind_all_nodes(directslave_t)
+corenet_udp_bind_all_nodes(directslave_t)
+corenet_tcp_bind_dns_port(directslave_t)
+corenet_udp_bind_dns_port(directslave_t)
+corenet_tcp_connect_dns_port(directslave_t)
+corenet_tcp_connect_http_port(directslave_t)
+corenet_tcp_bind_all_unreserved_ports(directslave_t)
+corenet_udp_bind_all_unreserved_ports(directslave_t)
+
+allow directslave_t self:capability { chown dac_override net_bind_service setgid setuid };
+allow directslave_t self:process { setrlimit signal };
+allow directslave_t self:tcp_socket { accept bind create getattr getopt listen name_bind read setopt shutdown write };
+allow directslave_t self:udp_socket { bind create getattr getopt name_bind read setopt write };
+allow directslave_t self:unix_stream_socket { accept bind connect create getattr listen read setopt shutdown write };
