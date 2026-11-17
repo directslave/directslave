@@ -11,7 +11,7 @@ older mode, where DirectSlave only maintains a zone list for BIND and calls
 `rndc`, is still available and is what an unchanged 3.x configuration keeps
 using.
 
-![Domains page](screenshots/domains.png)
+![Domains page](https://github.com/directslave/directslave/blob/main/docs/screenshots/domains.png)
 
 ## Download
 
